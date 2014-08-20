@@ -12,6 +12,8 @@ static struct option sg_opts[] = {
     { "status",   0, NULL, 's' },
     { "reboot",   0, NULL, 'r' },
     { "test",     0, NULL, 't' },
+    { "upload",     0, NULL, 'u' },
+    { "query",     0, NULL, 'q' },
     { 0, 0, NULL, 0}
 };
 
@@ -28,6 +30,8 @@ void usage( const char *ver)
     printf("  -s, --status     get meter status\n");
     printf("  -r, --reboot     send reboot command to server\n");
     printf("  -t, --test       just for test\n");
+    printf("  -u, --upload     ftp upload\n");
+    printf("  -q, --query      query register value\n");
 }
 
 int get_options(int argc, char **argv, const char *ver)
@@ -35,7 +39,7 @@ int get_options(int argc, char **argv, const char *ver)
     int c,i,ret=0;
     /* parse cmdline - overrides */
     while (1) {
-        c = getopt_long(argc, argv, "vhfsrt", sg_opts, &i);
+        c = getopt_long(argc, argv, "vhfsrtuq", sg_opts, &i);
         if (c == -1)
             break;
         switch (c) {
@@ -98,6 +102,42 @@ int get_options(int argc, char **argv, const char *ver)
             SBS_Close();
         }
             break;
+	case 'q':
+	{
+	    if (5 == argc)
+	    {
+		SBS_Init();
+		
+		int modbusID = atoi(argv[2]);
+		int regAddr = atoi(argv[3]);
+		int regNum = atoi(argv[4]);
+
+		ret = SBS_SetQueryRegCfg(modbusID,regAddr,regNum);
+
+		char reg_value[128] = {0};
+
+		ret = SBS_GetQueryRegValue((char **)&reg_value,128);
+		printf("%s\n",reg_value);
+
+		SBS_Close();
+	    }
+	    else
+		printf("-1\n");
+	}
+	    break;
+	case 'u':
+	{
+		SBS_Init();
+		ret = SBS_FtpUpload();
+		    
+		if(0 == ret)
+		    printf("1\n");  
+		else
+		    printf("0\n");
+
+		SBS_Close();
+	}
+	    break;
         default:
             break;
         }
